@@ -3,8 +3,11 @@ use opentelemetry_appender_log::OpenTelemetryLogBridge;
 use opentelemetry_otlp::TonicExporterBuilder;
 use opentelemetry_sdk::logs::LoggerProvider;
 use opentelemetry_sdk::runtime;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use std::str::FromStr;
+use opentelemetry::global;
+use opentelemetry_sdk::metrics::reader::{DefaultAggregationSelector, DefaultTemporalitySelector};
+use opentelemetry_sdk::metrics::{PeriodicReader, SdkMeterProvider};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -18,7 +21,20 @@ async fn main() -> Result<()> {
     let msg = format!("we are running hello world {:?}", now);
     log::info!("{}", &msg);
     println!("{}", &msg);
+
+    let meter_provider = init_meter_provider()?;
+    let meter = global::meter("");
+    let counter = meter.u64_counter("my_counter").init();
+    for _ in 1..5 {
+        let msg = "incrementing counter with 1";
+        log::info!("{}", &msg);
+        println!("{}", &msg);
+        counter.add(1, &[]);
+        tokio::time::sleep(Duration::from_secs(5)).await;
+    }
+
     logger_provider.shutdown()?;
+    meter_provider.shutdown()?;
     Ok(())
 }
 
@@ -38,4 +54,17 @@ fn init_logs() -> Result<LoggerProvider> {
     log::set_max_level(log_level.to_level_filter());
 
     Ok(logger_provider)
+}
+
+fn init_meter_provider() -> Result<SdkMeterProvider> {
+    let aggregation_selector = Box::new(DefaultAggregationSelector::new());
+    let temporality_selector = Box::new(DefaultTemporalitySelector::new());
+    let exporter = TonicExporterBuilder::default()
+        .build_metrics_exporter(aggregation_selector, temporality_selector)?;
+    let reader = PeriodicReader::builder(exporter, runtime::Tokio)
+        .with_interval(Duration::from_secs(10))
+        .build();
+    let provider = SdkMeterProvider::builder().with_reader(reader).build();
+    global::set_meter_provider(provider.clone());
+    Ok(provider)
 }

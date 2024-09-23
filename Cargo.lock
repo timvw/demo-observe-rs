@@ -172,6 +172,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "log",
+ "opentelemetry",
  "opentelemetry-appender-log",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
