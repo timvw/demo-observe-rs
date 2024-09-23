@@ -4,5 +4,7 @@ Demonstrate observability with [OpenTelemetry](https://opentelemetry.io/) in [Ru
 
 ## Logging
 
+## Metrics
 
+## Tracing
 
