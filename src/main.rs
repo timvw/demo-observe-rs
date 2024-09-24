@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
     std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.1.205:4317");
     std::env::set_var("OTEL_SERVICE_NAME", "demo-observe-rs");
 
-    let logger_provider = init_logs()?;
+    let logger_provider = init_logger_provider()?;
     let now = SystemTime::now();
     let msg = format!("we are running hello world {:?}", now);
     log::info!("{}", &msg);
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn init_logs() -> Result<LoggerProvider> {
+fn init_logger_provider() -> Result<LoggerProvider> {
     let logger_provider = opentelemetry_otlp::new_pipeline()
         .logging()
         .with_exporter(TonicExporterBuilder::default())
