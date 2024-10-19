@@ -3,11 +3,12 @@ mod otel;
 use anyhow::Result;
 use axum::{http::StatusCode, routing::get, Router};
 use tokio::signal;
+use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // better set these through configuration...
-    std::env::set_var("RUST_LOG", "demo_observe_rs=debug");
+    std::env::set_var("RUST_LOG", "info,tower_http=debug,demo_observe_rs=debug");
     std::env::set_var("OTEL_LOG_LEVEL", "debug");
     std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.1.205:4317");
     std::env::set_var("OTEL_SERVICE_NAME", "demo-observe-rs");
@@ -19,7 +20,8 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health))
-        .route("/error", get(error));
+        .route("/error", get(error))
+        .layer(TraceLayer::new_for_http());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app)
