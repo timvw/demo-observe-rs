@@ -4,7 +4,6 @@ use anyhow::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
     // better set these through configuration...
     std::env::set_var("RUST_LOG", "demo_observe_rs=debug");
     std::env::set_var("OTEL_LOG_LEVEL", "debug");
