@@ -2,6 +2,15 @@
 name = "demo-observe-rs"
 version = "0.1.0"
 edition = "2021"
+default-run = "server"
+
+[[bin]]
+name = "simple"
+path = "src/simple/main.rs"
+
+[[bin]]
+name = "server"
+path = "src/server/main.rs"
 
 [dependencies]
 anyhow = "1"
