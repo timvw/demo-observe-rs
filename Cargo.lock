@@ -189,9 +189,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "http",
  "log",
  "opentelemetry",
  "opentelemetry-appender-log",
+ "opentelemetry-http",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "tokio",
@@ -626,6 +628,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1ca6d4b69c50240d1da1fb540c468992fe0a82bc71dc5d4dd548781a5636d9b"
 dependencies = [
  "log",
+ "opentelemetry",
+]
+
+[[package]]
+name = "opentelemetry-http"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88d8c2b76e5f7848a289aa9666dbe56b16f8a22a4c5246ef37a14941818d2913"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "http",
  "opentelemetry",
 ]
 
