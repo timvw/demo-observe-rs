@@ -6,15 +6,13 @@ use axum::{http::StatusCode, routing::get, Router};
 use http::HeaderMap;
 use opentelemetry::global;
 use opentelemetry_http::HeaderInjector;
-use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use reqwest_tracing::TracingMiddleware;
 use tokio::signal;
 use tracing::{info, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[derive(Clone, Debug)]
 pub struct ServerState {
-    http_client: ClientWithMiddleware,
+    http_client: reqwest::Client,
 }
 
 #[tokio::main]
@@ -31,12 +29,8 @@ async fn main() -> Result<()> {
 
     let trace_layer = otel::build_otel_trace_layer();
 
-    let client = ClientBuilder::new(reqwest::Client::new())
-        .with(TracingMiddleware::default())
-        .build();
-
     let server_state = ServerState {
-        http_client: client,
+        http_client: reqwest::Client::new(),
     };
 
     let app = Router::new()
