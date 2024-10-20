@@ -1,17 +1,14 @@
 mod otel;
 
 use anyhow::Result;
-use axum::body::Body;
 use axum::extract::State;
 use axum::{http::StatusCode, routing::get, Router};
-use http::{HeaderMap, Request};
-use opentelemetry::trace::{TraceContextExt, Tracer};
-use opentelemetry::{global, Context};
-use opentelemetry_http::{HeaderExtractor, HeaderInjector};
+use http::HeaderMap;
+use opentelemetry::global;
+use opentelemetry_http::HeaderInjector;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_tracing::TracingMiddleware;
 use tokio::signal;
-use tower_http::trace::{DefaultMakeSpan, MakeSpan, TraceLayer};
 use tracing::{info, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
@@ -32,20 +29,7 @@ async fn main() -> Result<()> {
     let logger_provider = otel::init_logger_provider()?;
     let meter_provider = otel::init_meter_provider()?;
 
-    let span_builder = |req: &Request<Body>| {
-        let parent_context = global::get_text_map_propagator(|propagator| {
-            propagator.extract(&HeaderExtractor(req.headers()))
-        });
-        let otel_tracer = global::tracer("");
-        let otel_span_name = format!("{} {}", req.method(), req.uri().path());
-        let otel_span = otel_tracer.start_with_context(otel_span_name, &parent_context);
-        let cx = Context::current_with_span(otel_span);
-        let span = DefaultMakeSpan::default().make_span(req);
-        span.set_parent(cx);
-        span
-    };
-
-    let trace_layer = TraceLayer::new_for_http().make_span_with(span_builder);
+    let trace_layer = otel::build_otel_trace_layer();
 
     let client = ClientBuilder::new(reqwest::Client::new())
         .with(TracingMiddleware::default())
@@ -64,7 +48,7 @@ async fn main() -> Result<()> {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(crate::shutdown_signal())
         .await?;
 
     meter_provider.shutdown()?;

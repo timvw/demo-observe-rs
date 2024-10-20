@@ -1,8 +1,11 @@
 use anyhow::{Context, Result};
+use axum::body::Body;
+use http::Request;
 use opentelemetry::global;
 use opentelemetry::propagation::TextMapCompositePropagator;
-use opentelemetry::trace::TracerProvider;
+use opentelemetry::trace::{TraceContextExt, Tracer, TracerProvider};
 use opentelemetry_appender_log::OpenTelemetryLogBridge;
+use opentelemetry_http::HeaderExtractor;
 use opentelemetry_otlp::TonicExporterBuilder;
 use opentelemetry_sdk::logs::LoggerProvider;
 use opentelemetry_sdk::metrics::reader::{DefaultAggregationSelector, DefaultTemporalitySelector};
@@ -12,6 +15,9 @@ use opentelemetry_sdk::runtime;
 use opentelemetry_sdk::trace::{BatchConfig, Config};
 use std::str::FromStr;
 use std::time::Duration;
+use tower_http::trace::{DefaultMakeSpan, HttpMakeClassifier, MakeSpan, TraceLayer};
+use tracing::Span;
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::EnvFilter;
 
@@ -82,4 +88,24 @@ pub fn init_tracer_provider() -> Result<opentelemetry_sdk::trace::TracerProvider
     tracing::subscriber::set_global_default(subscriber)?;
 
     Ok(tracer_provider)
+}
+
+pub fn build_otel_trace_layer() -> TraceLayer<HttpMakeClassifier, fn(&Request<Body>) -> Span> {
+    let span_builder = |req: &Request<Body>| {
+        let parent_context = global::get_text_map_propagator(|propagator| {
+            propagator.extract(&HeaderExtractor(req.headers()))
+        });
+
+        let otel_tracer = global::tracer("");
+        let otel_span_name = format!("{} {}", req.method(), req.uri().path());
+        let otel_span = otel_tracer.start_with_context(otel_span_name, &parent_context);
+
+        let cx = opentelemetry::Context::current_with_span(otel_span);
+
+        let span = DefaultMakeSpan::default().make_span(req);
+        span.set_parent(cx);
+        span
+    };
+
+    TraceLayer::new_for_http().make_span_with(span_builder)
 }
