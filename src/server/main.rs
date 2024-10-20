@@ -3,10 +3,12 @@ mod otel;
 use anyhow::Result;
 use axum::extract::State;
 use axum::{http::StatusCode, routing::get, Router};
+use http::header;
 use http::HeaderMap;
 use opentelemetry::global;
 use opentelemetry_http::HeaderInjector;
 use tokio::signal;
+use tower_http::sensitive_headers::SetSensitiveRequestHeadersLayer;
 use tracing::{info, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
@@ -38,11 +40,15 @@ async fn main() -> Result<()> {
         .route("/health", get(health))
         .route("/error", get(error))
         .layer(trace_layer)
+        .layer(SetSensitiveRequestHeadersLayer::new(vec![
+            header::AUTHORIZATION,
+            header::COOKIE,
+        ]))
         .with_state(server_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app)
-        .with_graceful_shutdown(crate::shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal())
         .await?;
 
     meter_provider.shutdown()?;
