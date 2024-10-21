@@ -1,4 +1,5 @@
 mod otel;
+mod settings;
 
 use anyhow::Result;
 use axum::extract::State;
@@ -19,6 +20,9 @@ pub struct ServerState {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let settings = settings::load_settings()?;
+    let address = format!("{}:{}", settings.host, settings.port);
+
     // better set these through configuration...
     std::env::set_var("RUST_LOG", "info,tower_http=debug,demo_observe_rs=debug");
     std::env::set_var("OTEL_LOG_LEVEL", "debug");
@@ -46,7 +50,8 @@ async fn main() -> Result<()> {
         ]))
         .with_state(server_state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = tokio::net::TcpListener::bind(&address).await?;
+    info!("listening on http://{}", address);
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
