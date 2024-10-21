@@ -8,6 +8,8 @@ use http::header;
 use http::HeaderMap;
 use opentelemetry::global;
 use opentelemetry_http::HeaderInjector;
+use reqwest::Client;
+use settings::Settings;
 use tokio::signal;
 use tower_http::sensitive_headers::SetSensitiveRequestHeadersLayer;
 use tracing::{info, Span};
@@ -15,19 +17,17 @@ use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[derive(Clone, Debug)]
 pub struct ServerState {
+    settings: Settings,
     http_client: reqwest::Client,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // load an eventual .env file
+    dotenvy::dotenv().ok();
+
     let settings = settings::load_settings()?;
     let address = format!("{}:{}", settings.host, settings.port);
-
-    // better set these through configuration...
-    std::env::set_var("RUST_LOG", "info,tower_http=debug,demo_observe_rs=debug");
-    std::env::set_var("OTEL_LOG_LEVEL", "debug");
-    std::env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.1.205:4317");
-    std::env::set_var("OTEL_SERVICE_NAME", "demo-observe-rs");
 
     let tracer_provider = otel::init_tracer_provider()?;
     let logger_provider = otel::init_logger_provider()?;
@@ -35,8 +35,11 @@ async fn main() -> Result<()> {
 
     let trace_layer = otel::build_otel_trace_layer();
 
+    let http_client = Client::new();
+
     let server_state = ServerState {
-        http_client: reqwest::Client::new(),
+        settings,
+        http_client,
     };
 
     let app = Router::new()
@@ -76,10 +79,11 @@ fn build_request_headers() -> HeaderMap {
 
 async fn root(State(server_state): State<ServerState>) -> Result<&'static str, StatusCode> {
     let req_headers = build_request_headers();
+    let url = format!("http://localhost:{}/health", server_state.settings.port);
 
     let health_rsp = server_state
         .http_client
-        .get("http://localhost:3000/health")
+        .get(url)
         .headers(req_headers)
         .send()
         .await

@@ -5,7 +5,7 @@ use clap::{CommandFactory, Parser};
 use twelf::{config, Layer};
 
 #[config]
-#[derive(Parser, Debug, Default)]
+#[derive(Parser, Debug, Default, Clone)]
 #[command(author, version, about, long_about = None)]
 pub struct Settings {
     #[clap(long, help = "The host to bind to", default_value = "127.0.0.1")]
