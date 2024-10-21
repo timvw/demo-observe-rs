@@ -16,7 +16,7 @@ cargo run --bin server
 
 ## Guidelines
 
-Use the [Tracing](https://github.com/tokio-rs/tracing) macros to instrument your application.
-[Log](https://docs.rs/log/latest/log/) does not have the context which tracing has.
-With the aid of [opentelemetry-appender-log](https://crates.io/crates/opentelemetry-appender-log) it's possible to retrofit libraries which already use Log.
+* Use the [Tracing](https://github.com/tokio-rs/tracing) macros to instrument your application.
+* [Log](https://docs.rs/log/latest/log/) does not have the context which tracing has.
+* With the aid of [opentelemetry-appender-log](https://crates.io/crates/opentelemetry-appender-log) it's possible to retrofit libraries which already use Log.
 
