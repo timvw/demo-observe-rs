@@ -19,7 +19,7 @@ use opentelemetry_sdk::{
 	runtime,
 	trace::{BatchConfig, Config},
 };
-use std::{str::FromStr, time::Duration};
+use std::str::FromStr;
 use tower_http::trace::{DefaultMakeSpan, HttpMakeClassifier, MakeSpan, TraceLayer};
 use tracing::Span;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
@@ -49,9 +49,7 @@ pub fn init_meter_provider() -> Result<SdkMeterProvider> {
 	let temporality_selector = Box::new(DefaultTemporalitySelector::new());
 	let exporter = TonicExporterBuilder::default()
 		.build_metrics_exporter(aggregation_selector, temporality_selector)?;
-	let reader = PeriodicReader::builder(exporter, runtime::Tokio)
-		.with_interval(Duration::from_secs(10))
-		.build();
+	let reader = PeriodicReader::builder(exporter, runtime::Tokio).build();
 	let provider = SdkMeterProvider::builder().with_reader(reader).build();
 	global::set_meter_provider(provider.clone());
 	Ok(provider)
