@@ -11,10 +11,7 @@ use opentelemetry_http::HeaderExtractor;
 use opentelemetry_otlp::TonicExporterBuilder;
 use opentelemetry_sdk::{
 	logs::LoggerProvider,
-	metrics::{
-		reader::{DefaultAggregationSelector, DefaultTemporalitySelector},
-		PeriodicReader, SdkMeterProvider,
-	},
+	metrics::{reader::DefaultTemporalitySelector, PeriodicReader, SdkMeterProvider},
 	propagation::{BaggagePropagator, TraceContextPropagator},
 	runtime,
 	trace::{BatchConfig, Config},
@@ -45,10 +42,8 @@ pub fn init_logger_provider() -> Result<LoggerProvider> {
 }
 
 pub fn init_meter_provider() -> Result<SdkMeterProvider> {
-	let aggregation_selector = Box::new(DefaultAggregationSelector::new());
 	let temporality_selector = Box::new(DefaultTemporalitySelector::new());
-	let exporter = TonicExporterBuilder::default()
-		.build_metrics_exporter(aggregation_selector, temporality_selector)?;
+	let exporter = TonicExporterBuilder::default().build_metrics_exporter(temporality_selector)?;
 	let reader = PeriodicReader::builder(exporter, runtime::Tokio).build();
 	let provider = SdkMeterProvider::builder().with_reader(reader).build();
 	global::set_meter_provider(provider.clone());
