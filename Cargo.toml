@@ -23,7 +23,7 @@ opentelemetry-appender-log = { version = "0.26" }
 opentelemetry-http = { version = "0.26" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-tracing-opentelemetry = { version = "0.27" }
+tracing-opentelemetry = { version = "0.32" }
 axum = "0.7"
 tower-http = {  version = "0.6", features = ["trace", "propagate-header", "sensitive-headers"] }
 http = "1.1.0"
