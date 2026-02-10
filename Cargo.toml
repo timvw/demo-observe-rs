@@ -16,11 +16,11 @@ path = "src/server/main.rs"
 anyhow = "1"
 log = "0.4.22"
 tokio = {  version = "1", features = ["full"] }
-opentelemetry = "0.26"
-opentelemetry_sdk = {  version = "0.26", features = ["rt-tokio"] }
-opentelemetry-otlp = {  version = "0.26" }
-opentelemetry-appender-log = { version = "0.26" }
-opentelemetry-http = { version = "0.26" }
+opentelemetry = "0.31"
+opentelemetry_sdk = {  version = "0.31", features = ["rt-tokio"] }
+opentelemetry-otlp = {  version = "0.31" }
+opentelemetry-appender-log = { version = "0.31" }
+opentelemetry-http = { version = "0.31" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-opentelemetry = { version = "0.27" }
